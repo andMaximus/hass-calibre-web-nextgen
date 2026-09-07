@@ -1,7 +1,8 @@
-# Thin wrapper over the upstream multi-arch image (amd64 + arm64). Supervisor
-# passes BUILD_ARCH / BUILD_VERSION automatically; the BUILD_FROM default below
-# is used unless overridden. Docker resolves the right platform from the manifest.
-ARG BUILD_FROM="ghcr.io/new-usemame/calibre-web-nextgen:latest"
+# Thin wrapper over the upstream multi-arch image (amd64 + arm64). The pinned tag
+# below is bumped automatically by .github/workflows/upstream-sync.yml whenever
+# Calibre-Web-NextGen cuts a release; the add-on `version:` tracks it 1:1.
+# Docker resolves the right platform from the multi-arch manifest.
+ARG BUILD_FROM="ghcr.io/new-usemame/calibre-web-nextgen:v4.1.43"
 FROM ${BUILD_FROM}
 
 # cifs-utils / nfs-common: mount the library from an SMB or NFS share (optional).

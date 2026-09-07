@@ -1,5 +1,17 @@
 # Changelog
 
+The add-on version now tracks upstream Calibre-Web-NextGen 1:1 (e.g. `4.1.43` =
+NextGen `v4.1.43`). `.github/workflows/upstream-sync.yml` bumps it automatically
+on every upstream release, so Home Assistant shows an update. History below the
+switch is the wrapper's own `0.x` line.
+
+## 4.1.43
+
+- Version scheme switched to track upstream. Pinned to
+  [`v4.1.43`](https://github.com/new-usemame/Calibre-Web-NextGen/releases/tag/v4.1.43);
+  auto-bumped from here on.
+
+
 ## 0.8.1
 
 - NFS mount: use `vers=4` (auto-negotiate the v4 minor) instead of a hardcoded

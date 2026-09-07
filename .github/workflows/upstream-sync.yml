@@ -1,0 +1,67 @@
+name: Track upstream NextGen releases
+
+on:
+  schedule:
+    - cron: "23 */6 * * *"   # every 6 hours
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: upstream-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve latest upstream release
+        id: up
+        run: |
+          tag=$(curl -fsSL -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/new-usemame/Calibre-Web-NextGen/releases/latest" \
+            | jq -r '.tag_name // empty')
+          if [ -z "$tag" ] || [ "$tag" = "null" ]; then
+            echo "could not resolve upstream release"; exit 1
+          fi
+          echo "tag=$tag"       >> "$GITHUB_OUTPUT"
+          echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Read current pinned version
+        id: cur
+        run: |
+          cur=$(grep -E '^version:' calibre-web-nextgen/config.yaml | sed -E 's/version:\s*"(.*)"/\1/')
+          echo "version=$cur" >> "$GITHUB_OUTPUT"
+
+      - name: Bump to upstream release
+        if: steps.up.outputs.version != steps.cur.outputs.version
+        env:
+          NEW: ${{ steps.up.outputs.version }}
+          TAG: ${{ steps.up.outputs.tag }}
+        run: |
+          set -euo pipefail
+          cd calibre-web-nextgen
+
+          sed -i -E "s|^version:.*|version: \"${NEW}\"|" config.yaml
+          sed -i -E "s|(ghcr\.io/new-usemame/calibre-web-nextgen:)[^\"]*|\1${TAG}|" Dockerfile
+
+          {
+            echo "# Changelog"
+            echo
+            echo "## ${NEW}"
+            echo
+            echo "- Track upstream Calibre-Web-NextGen [\`${TAG}\`](https://github.com/new-usemame/Calibre-Web-NextGen/releases/tag/${TAG})."
+            echo
+            tail -n +2 CHANGELOG.md
+          } > CHANGELOG.md.new
+          mv CHANGELOG.md.new CHANGELOG.md
+
+          cd ..
+          git config user.name  "andMaximus"
+          git config user.email "72256503+andMaximus@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: track upstream NextGen ${TAG}"
+          git push

@@ -125,7 +125,8 @@ Hardcover-ID backfill and the Kobo/KOReader progress -> Hardcover sync.
 ## Notes
 
 - Upstream image is **amd64 / aarch64 only** - not armv7.
-- The add-on rebuilds against upstream `:latest` whenever you reinstall or bump
-  its version. Pin a tag in the Dockerfile `ARG BUILD_FROM` for reproducibility.
+- The add-on version tracks upstream NextGen 1:1 and is bumped automatically by a
+  scheduled GitHub workflow when NextGen cuts a release - Home Assistant then
+  offers it as a normal add-on update.
 - SQLite over SMB: `metadata.db` lives on your share. Keep NextGen the only thing
   writing it (use the `ingest` folder, not `calibredb` from another machine).
