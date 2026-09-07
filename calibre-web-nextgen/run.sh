@@ -153,6 +153,16 @@ if [ -n "${_INGEST}" ]; then
     fi
 fi
 
+# --- network-share ingest: force polling ------------------------------------
+# When the library / ingest folder lives on an NFS or SMB mount, Linux inotify
+# does NOT see files written by other hosts (e.g. a script dropping epubs into
+# the ingest folder over SMB). NextGen's NETWORK_SHARE_MODE switches its ingest
+# and metadata watchers to polling, which does see them.
+if [ -n "${_NFSDISKS}" ] || [ -n "${_NETWORKDISKS}" ]; then
+    export NETWORK_SHARE_MODE=true
+    echo "[cwng] NETWORK_SHARE_MODE=true (network share configured - ingest watcher will poll)"
+fi
+
 # --- HA Ingress nginx shim ---------------------------------------------------
 if command -v nginx >/dev/null 2>&1; then
     mkdir -p /var/lib/nginx /var/log/nginx
