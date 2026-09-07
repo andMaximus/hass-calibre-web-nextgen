@@ -37,9 +37,9 @@ direct `http://<ha-ip-or-tailnet-ip>:8083` URL, not the Ingress one.
 | `TZ` | *(blank)* | Blank = inherit HA system timezone |
 | `library` | *(blank)* | Path to the folder holding your `metadata.db`, e.g. `/mnt/Books` or `/share/books/calibre`. Bound to `/calibre-library` where CWA looks. Blank = CWA auto-detects or creates one |
 | `ingest` | *(blank)* | Optional auto-import drop folder. Files placed here are converted and added to the library, then deleted. Bound to `/cwa-book-ingest`. Blank = feature unused |
-| `networkdisks` | *(blank)* | SMB/CIFS share(s) to mount, e.g. `//192.168.2.223/Media/Books`. Comma-separate for several |
+| `networkdisks` | *(blank)* | SMB/CIFS share(s) to mount, e.g. `//192.168.1.10/Media/Books`. Comma-separate for several |
 | `cifsusername` / `cifspassword` / `cifsdomain` | *(blank)* | SMB credentials (password: any characters OK, passed via a creds file) |
-| `nfsdisks` | *(blank)* | NFS share(s), `host:/export` e.g. `192.168.2.223:/Media`. **Prefer this** when `metadata.db` is on the share |
+| `nfsdisks` | *(blank)* | NFS share(s), `host:/export` e.g. `192.168.1.10:/Media`. **Prefer this** when `metadata.db` is on the share |
 
 ### SMB vs NFS for the library
 
