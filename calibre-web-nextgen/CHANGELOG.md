@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.8.0
+
+- Add `nfsdisks` option + `nfs-common` in the image. NFSv4 gives SQLite
+  reliable file locking, unlike CIFS - use it when `metadata.db` is on the
+  share. Mount tries vers 4.2 -> 4.1 -> 4.0, warns on a v3 fallback.
+- DOCS: SMB-vs-NFS guidance for a network library.
+
 ## 0.7.1
 
 - CIFS mounts now use `nobrl` - the NAS's SMB byte-range locking made SQLite

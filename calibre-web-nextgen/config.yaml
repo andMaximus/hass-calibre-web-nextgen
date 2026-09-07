@@ -1,6 +1,6 @@
 ---
 name: Calibre-Web-NextGen
-version: "0.7.1"
+version: "0.8.0"
 slug: calibre_web_nextgen
 description: >-
   eBook library + reader. Actively-maintained fork of Calibre-Web-Automated:
@@ -56,6 +56,7 @@ options:
   cifsusername: ""
   cifspassword: ""
   cifsdomain: ""
+  nfsdisks: ""
 schema:
   PUID: int
   PGID: int
@@ -66,3 +67,4 @@ schema:
   cifsusername: "str?"
   cifspassword: "str?"
   cifsdomain: "str?"
+  nfsdisks: "str?"

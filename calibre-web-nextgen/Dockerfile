@@ -4,7 +4,7 @@
 ARG BUILD_FROM="ghcr.io/new-usemame/calibre-web-nextgen:latest"
 FROM ${BUILD_FROM}
 
-# cifs-utils: mount the library from an SMB/CIFS share (optional feature).
+# cifs-utils / nfs-common: mount the library from an SMB or NFS share (optional).
 # nginx: translate HA Ingress' X-Ingress-Path into the X-Script-Name /
 #        X-Forwarded-Prefix headers calibre-web understands.
 # tzdata: resolve a custom TZ option.
@@ -12,10 +12,10 @@ FROM ${BUILD_FROM}
 RUN \
     if command -v apt-get >/dev/null 2>&1; then \
         apt-get update \
-        && apt-get install -y --no-install-recommends cifs-utils nginx-light tzdata \
+        && apt-get install -y --no-install-recommends cifs-utils nfs-common nginx-light tzdata \
         && rm -rf /var/lib/apt/lists/*; \
     elif command -v apk >/dev/null 2>&1; then \
-        apk add --no-cache cifs-utils nginx tzdata; \
+        apk add --no-cache cifs-utils nfs-utils nginx tzdata; \
     fi
 
 COPY nginx-ingress.conf /etc/nginx-ingress.conf

@@ -22,7 +22,7 @@ configuration:
     name: SMB/CIFS share(s)
     description: >-
       e.g. //192.168.2.223/Media/Books - mounted at /mnt/Books. Comma-separate
-      for several. Leave blank to skip SMB mounting.
+      for several. Leave blank if using NFS or a local library.
   cifsusername:
     name: SMB username
     description: Username for the SMB/CIFS share(s).
@@ -34,3 +34,10 @@ configuration:
   cifsdomain:
     name: SMB domain / workgroup
     description: Optional SMB workgroup or domain.
+  nfsdisks:
+    name: NFS share(s)
+    description: >-
+      host:/export, e.g. 192.168.2.223:/Media - mounted at /mnt/Media. Prefer
+      this over SMB when metadata.db lives on the share: NFSv4 gives SQLite
+      reliable locking. Comma-separate for several. NAS must export NFSv4 and
+      allow this host (no root squash).

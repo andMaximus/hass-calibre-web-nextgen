@@ -37,10 +37,21 @@ direct `http://<ha-ip-or-tailnet-ip>:8083` URL, not the Ingress one.
 | `TZ` | *(blank)* | Blank = inherit HA system timezone |
 | `library` | *(blank)* | Path to the folder holding your `metadata.db`, e.g. `/mnt/Books` or `/share/books/calibre`. Bound to `/calibre-library` where CWA looks. Blank = CWA auto-detects or creates one |
 | `ingest` | *(blank)* | Optional auto-import drop folder. Files placed here are converted and added to the library, then deleted. Bound to `/cwa-book-ingest`. Blank = feature unused |
-| `networkdisks` | *(blank)* | SMB/CIFS share(s) to mount, e.g. `//192.168.2.223/Media/Books`. Comma-separate for several. Leave blank to skip |
-| `cifsusername` | *(blank)* | SMB username |
-| `cifspassword` | *(blank)* | SMB password (any characters OK - passed via a creds file, not the command line) |
-| `cifsdomain` | *(blank)* | SMB workgroup/domain (optional) |
+| `networkdisks` | *(blank)* | SMB/CIFS share(s) to mount, e.g. `//192.168.2.223/Media/Books`. Comma-separate for several |
+| `cifsusername` / `cifspassword` / `cifsdomain` | *(blank)* | SMB credentials (password: any characters OK, passed via a creds file) |
+| `nfsdisks` | *(blank)* | NFS share(s), `host:/export` e.g. `192.168.2.223:/Media`. **Prefer this** when `metadata.db` is on the share |
+
+### SMB vs NFS for the library
+
+If `metadata.db` lives on the network share, **use NFS** (`nfsdisks`), not SMB.
+CIFS byte-range locking is unreliable on most NAS SMB servers and makes SQLite
+throw persistent "database is locked" (the add-on works around it with `nobrl`,
+which then has no cross-writer safety). NFSv4 gives SQLite proper locking.
+
+NAS side (NFS): export the folder over **NFSv4**, allow this Home Assistant
+host's IP, read/write, **no root squash** (the add-on runs as root). Then set
+`nfsdisks: <nas-ip>:/<export>` and point `library` / `ingest` at subpaths of the
+resulting `/mnt/<export>` mount.
 
 ## Storage layout
 
@@ -49,7 +60,7 @@ direct `http://<ha-ip-or-tailnet-ip>:8083` URL, not the Ingress one.
 | `/config` | add-on config dir | `app.db`, users, settings, logs, KOReader sync state |
 | `/share` | HA `share` | local Calibre library / ingest folder |
 | `/media` | HA `media` | alternative library / ingest location |
-| `/mnt/<share>` | mounted SMB share | each `networkdisks` entry mounts at `/mnt/<last-path-segment>` |
+| `/mnt/<share>` | mounted SMB/NFS share | each `networkdisks` / `nfsdisks` entry mounts at `/mnt/<last-path-segment>` |
 | `/calibre-library` | `library` option | where CWA reads the library |
 | `/cwa-book-ingest` | `ingest` option | auto-import drop folder |
 

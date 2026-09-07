@@ -27,6 +27,7 @@ sh("_NETWORKDISKS", o.get("networkdisks") or "")
 sh("_CIFS_USER", o.get("cifsusername") or "")
 sh("_CIFS_PASS", o.get("cifspassword") or "")
 sh("_CIFS_DOMAIN", o.get("cifsdomain") or "")
+sh("_NFSDISKS", o.get("nfsdisks") or "")
 PY
 )"
 export PUID PGID
@@ -79,6 +80,39 @@ if [ -n "${_NETWORKDISKS}" ]; then
     IFS="$OLDIFS"
     rm -f "$CRED"
     echo "[cwng] SMB share(s) available under /mnt/"
+fi
+
+# --- NFS mounts --------------------------------------------------------------
+# NFSv4 gives SQLite reliable file locking (unlike CIFS) - the right choice when
+# metadata.db lives on the share. Format: host:/export  (comma-separate several).
+mount_nfs() {
+    local spec="$1" mp="$2" opts
+    for opts in "vers=4.2" "vers=4.1" "vers=4.0" "vers=3,nolock"; do
+        if mount -t nfs -o "rw,hard,${opts}" "$spec" "$mp" 2>/tmp/nfs.err; then
+            echo "[cwng] mounted $spec -> $mp  (nfs ${opts})"
+            case "$opts" in vers=3*) echo "[cwng]   NOTE: NFSv3 fell back with nolock - SQLite locking will NOT work; prefer NFSv4 on the NAS" ;; esac
+            return 0
+        fi
+    done
+    echo "[cwng] ERROR: could not mount $spec -> $mp"
+    sed 's/^/[cwng]   /' /tmp/nfs.err 2>/dev/null || true
+    return 1
+}
+
+if [ -n "${_NFSDISKS}" ]; then
+    OLDIFS="$IFS"; IFS=','
+    for disk in ${_NFSDISKS}; do
+        IFS="$OLDIFS"
+        disk="$(echo "$disk" | sed 's#^[[:space:]]*##; s#[[:space:]]*$##')"
+        [ -z "$disk" ] && continue
+        name="$(basename "$disk")"
+        mp="/mnt/${name}"
+        mkdir -p "$mp"
+        mount_nfs "$disk" "$mp" || true
+        IFS=','
+    done
+    IFS="$OLDIFS"
+    echo "[cwng] NFS share(s) available under /mnt/"
 fi
 
 # --- library location ------------------------------------------------------
