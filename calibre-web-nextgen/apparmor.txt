@@ -1,0 +1,40 @@
+#include <tunables/global>
+
+# Loose-but-real profile: the CIFS mount needs sys_admin + mount, and the
+# LinuxServer/s6 + Calibre stack touches a lot, so file/network/exec are broad.
+# It still blocks capabilities and behaviours not listed below (raw IO, bpf,
+# ptrace of arbitrary peers, kernel module ops beyond cifs autoload, etc.) and
+# keeps AppArmor enabled instead of disabled.
+profile calibre_web_nextgen flags=(attach_disconnected,mediate_deleted) {
+  #include <abstractions/base>
+
+  capability chown,
+  capability dac_override,
+  capability dac_read_search,
+  capability fowner,
+  capability fsetid,
+  capability kill,
+  capability setgid,
+  capability setuid,
+  capability sys_chroot,
+  capability sys_admin,       # mount(2) for the CIFS library share
+  capability sys_module,      # cifs kernel-module autoload
+  capability sys_resource,
+  capability net_bind_service,
+  capability audit_write,
+
+  mount,
+  umount,
+  remount,
+  pivot_root,
+
+  network,
+  signal,
+  unix,
+  ptrace (trace,read) peer=docker-default,
+  signal (receive) set=(kill,term) peer=/usr/bin/docker,
+
+  # all file access; execute inherits this profile
+  file,
+  /** ix,
+}

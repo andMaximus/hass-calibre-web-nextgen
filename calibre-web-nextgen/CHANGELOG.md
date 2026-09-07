@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0
+
+- Ship a custom AppArmor profile (`apparmor.txt`) instead of `apparmor: false`.
+  It permits `mount` (for the CIFS share) but keeps AppArmor enabled and
+  confining everything else - restores the security rating that disabling
+  AppArmor had cost. `SYS_ADMIN` is still required and can't be dropped.
+
 ## 0.2.0
 
 - Optional SMB/CIFS library mounting: `networkdisks`, `cifsusername`,

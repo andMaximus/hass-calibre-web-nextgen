@@ -60,8 +60,10 @@ The mount happens at container start (before the app), tries SMB dialects
 `3.1.1 -> 3.0 -> 2.1 -> 1.0` and retries once with `noserverino`. Mounts appear
 in the log as `[cwng] mounted ... -> /mnt/...`; a failure logs `[cwng] ERROR` and
 the raw `mount.cifs` message, and the add-on still starts so you can read the log.
-Mounting needs the `SYS_ADMIN` capability and the add-on's AppArmor profile is
-disabled for that reason (it holds `SYS_ADMIN` regardless).
+Mounting needs the `SYS_ADMIN` capability. AppArmor stays **enabled** with a
+custom profile (`apparmor.txt`) that permits `mount` but still confines the rest
+- so the add-on keeps a reasonable security rating rather than the lower one that
+disabling AppArmor would give.
 
 Migrating from the alexbelgium calibre-web add-on: the `networkdisks` /
 `cifsusername` / `cifspassword` / `PUID` / `PGID` options carry over as-is (it

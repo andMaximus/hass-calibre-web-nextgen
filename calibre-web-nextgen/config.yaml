@@ -1,6 +1,6 @@
 ---
 name: Calibre-Web-NextGen
-version: "0.2.0"
+version: "0.3.0"
 slug: calibre_web_nextgen
 description: >-
   Actively-maintained fork of Calibre-Web-Automated with built-in KOReader
@@ -37,12 +37,13 @@ map:
     read_only: false
     path: /config
 # mount(2) for CIFS needs SYS_ADMIN; DAC_READ_SEARCH helps traverse the share.
-# The default add-on AppArmor profile blocks mount, so it is disabled here - the
-# add-on already holds SYS_ADMIN either way.
+# A custom AppArmor profile (apparmor.txt) permits `mount fstype=cifs` while
+# still confining everything else - keeps AppArmor enabled (green) and the
+# security rating higher than disabling it would.
 privileged:
   - SYS_ADMIN
   - DAC_READ_SEARCH
-apparmor: false
+apparmor: calibre_web_nextgen
 options:
   PUID: 0
   PGID: 0
