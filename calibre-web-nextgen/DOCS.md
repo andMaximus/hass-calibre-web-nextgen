@@ -21,8 +21,12 @@ Why this instead of plain calibre-web:
 2. Install **Calibre-Web-NextGen**. Supervisor builds a thin wrapper over the
    upstream image (fast; needs internet + a little disk).
 3. Set options (see below), Start, open the log to confirm it came up.
-4. Open the UI (sidebar or `http://<ha>:8083`). Default login: `admin` /
-   `admin123` - **change it immediately** under Profile -> Account.
+4. Open the UI - the sidebar panel / "Open Web UI" (via the Ingress nginx shim),
+   or directly at `http://<ha-ip>:8083`. Default login: `admin` / `admin123` -
+   **change it immediately** under Profile -> Account.
+
+Devices that sync from outside Home Assistant (Kobo, KOReader) must use the
+direct `http://<ha-ip-or-tailnet-ip>:8083` URL, not the Ingress one.
 
 ## Options
 

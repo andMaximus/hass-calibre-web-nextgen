@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.0
+
+- Fix Ingress 404: add an in-container nginx shim (`nginx-light`) on port 8099
+  that maps HA's `X-Ingress-Path` to the `X-Script-Name` / `X-Forwarded-Prefix`
+  headers calibre-web needs, so the "Open Web UI" button and sidebar panel work
+  under the dynamic ingress subpath. Verified: redirects and static asset URLs
+  come back correctly prefixed. The mapped host port 8083 still serves
+  calibre-web directly (needed for Kobo / KOReader sync from outside HA).
+
 ## 0.3.1
 
 - Fix: `apparmor` config key must be a boolean, not a profile name (Supervisor

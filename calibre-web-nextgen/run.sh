@@ -75,5 +75,18 @@ if [ -n "${_NETWORKDISKS}" ]; then
     echo "[cwng] SMB share(s) available under /mnt/ - point the Calibre library location there"
 fi
 
+# --- HA Ingress nginx shim ---------------------------------------------------
+if command -v nginx >/dev/null 2>&1; then
+    mkdir -p /var/lib/nginx /var/log/nginx
+    if nginx -t -c /etc/nginx-ingress.conf 2>/tmp/nginx.err; then
+        nginx -c /etc/nginx-ingress.conf
+        echo "[cwng] Ingress nginx shim listening on :8099 -> :8083"
+    else
+        echo "[cwng] WARN: Ingress nginx config test failed - the Ingress UI"
+        echo "[cwng]       may 404; the mapped host port 8083 still works."
+        sed 's/^/[cwng]   /' /tmp/nginx.err 2>/dev/null || true
+    fi
+fi
+
 echo "[cwng] starting upstream init (/init)"
 exec /init

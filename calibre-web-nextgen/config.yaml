@@ -1,6 +1,6 @@
 ---
 name: Calibre-Web-NextGen
-version: "0.3.1"
+version: "0.4.0"
 slug: calibre_web_nextgen
 description: >-
   Actively-maintained fork of Calibre-Web-Automated with built-in KOReader
@@ -14,9 +14,10 @@ arch:
   - aarch64
 # The upstream image ships its own s6-overlay init at /init - let it run.
 init: false
-# Serve the UI through the HA sidebar.
+# Serve the UI through the HA sidebar. Ingress hits the in-container nginx shim
+# on 8099, which rewrites X-Ingress-Path so calibre-web works under the subpath.
 ingress: true
-ingress_port: 8083
+ingress_port: 8099
 ingress_stream: true
 panel_icon: mdi:bookshelf
 panel_title: Calibre-Web
