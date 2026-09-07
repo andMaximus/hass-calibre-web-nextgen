@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.0
+
+- Add a `library` option: bind-mounts the folder holding your `metadata.db` to
+  `/calibre-library` so CWA auto-detects an existing library (its "Location of
+  Calibre database" UI field is disabled by design). Verified: bind + detection.
+
 ## 0.5.0
 
 - Drop `build.yaml` (Supervisor deprecated it). `BUILD_FROM` is now an `ARG`

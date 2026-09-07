@@ -35,6 +35,7 @@ direct `http://<ha-ip-or-tailnet-ip>:8083` URL, not the Ingress one.
 | `PUID` | `0` | UID that owns config + library. `0` (root) is simplest with CIFS; `1000` for a local `/share` library |
 | `PGID` | `0` | GID counterpart |
 | `TZ` | *(blank)* | Blank = inherit HA system timezone |
+| `library` | *(blank)* | Path to the folder holding your `metadata.db`, e.g. `/mnt/Books` or `/share/books/calibre`. Bound to `/calibre-library` where CWA looks. Blank = CWA auto-detects or creates one |
 | `networkdisks` | *(blank)* | SMB/CIFS share(s) to mount, e.g. `//192.168.2.223/Media/Books`. Comma-separate for several. Leave blank to skip |
 | `cifsusername` | *(blank)* | SMB username |
 | `cifspassword` | *(blank)* | SMB password (any characters OK - passed via a creds file, not the command line) |
@@ -49,14 +50,19 @@ direct `http://<ha-ip-or-tailnet-ip>:8083` URL, not the Ingress one.
 | `/media` | HA `media` | alternative library / ingest location |
 | `/mnt/<share>` | mounted SMB share | each `networkdisks` entry mounts at `/mnt/<last-path-segment>` |
 
-On first run set **Admin -> Basic Configuration -> Location of Calibre database**
-to wherever `metadata.db` lives - e.g. `/mnt/Books` for the CIFS example above,
-or `/share/books/calibre` for a local library. If you have none, NextGen creates
-an empty one there.
+**Setting the library:** CWA/NextGen deliberately disables the "Location of
+Calibre database" field in the UI - it only looks in `/calibre-library`. Use the
+**`library` add-on option** instead: set it to the folder that contains your
+`metadata.db` (`/mnt/Books`, `/share/books/calibre`, ...). The add-on bind-mounts
+that to `/calibre-library` and CWA auto-detects the existing library on start
+(it searches subfolders too). Leave `library` blank to let CWA create an empty
+one. If CWA logs "not a Calibre database", the path is pointing one level too
+high or low - fix `library` and restart.
 
 Book auto-ingest watches `/cwa-book-ingest` inside the container. To feed it from
-a share, set the ingest path in the UI to a folder under `/share`, `/media` or
-`/mnt/<share>`.
+a share, run `cwa-change-dirs` in the add-on's container terminal, or drop files
+into `/share`/`/media` and move them - the ingest folder can't be remapped from
+the add-on options yet.
 
 ### SMB/CIFS mount details
 

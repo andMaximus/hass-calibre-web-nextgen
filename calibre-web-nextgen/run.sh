@@ -21,6 +21,7 @@ sh("PGID", int(o.get("PGID", 0) or 0))
 tz = str(o.get("TZ") or "").strip()
 if tz and all(c.isalnum() or c in "/_+-" for c in tz):
     sh("TZ", tz)
+sh("_LIBRARY", str(o.get("library") or "").strip())
 sh("_NETWORKDISKS", o.get("networkdisks") or "")
 sh("_CIFS_USER", o.get("cifsusername") or "")
 sh("_CIFS_PASS", o.get("cifspassword") or "")
@@ -72,7 +73,28 @@ if [ -n "${_NETWORKDISKS}" ]; then
     done
     IFS="$OLDIFS"
     rm -f "$CRED"
-    echo "[cwng] SMB share(s) available under /mnt/ - point the Calibre library location there"
+    echo "[cwng] SMB share(s) available under /mnt/"
+fi
+
+# --- library location ------------------------------------------------------
+# CWA/NextGen disables the "Location of Calibre database" UI field and only
+# looks in /calibre-library. Bind the chosen path there so it auto-detects
+# an existing library (metadata.db). Empty -> leave the default in place.
+if [ -n "${_LIBRARY}" ]; then
+    if [ -d "${_LIBRARY}" ]; then
+        mkdir -p /calibre-library
+        if mount --bind "${_LIBRARY}" /calibre-library 2>/tmp/bind.err; then
+            echo "[cwng] library: bound ${_LIBRARY} -> /calibre-library"
+            [ -f /calibre-library/metadata.db ] \
+                && echo "[cwng] library: found existing metadata.db" \
+                || echo "[cwng] library: no metadata.db at the root (CWA will search subfolders / create one)"
+        else
+            echo "[cwng] WARN: bind mount of ${_LIBRARY} failed:"
+            sed 's/^/[cwng]   /' /tmp/bind.err 2>/dev/null || true
+        fi
+    else
+        echo "[cwng] WARN: library path '${_LIBRARY}' does not exist - check the SMB mount / path"
+    fi
 fi
 
 # --- HA Ingress nginx shim ---------------------------------------------------
