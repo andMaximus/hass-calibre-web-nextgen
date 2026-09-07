@@ -1,16 +1,31 @@
 ---
 configuration:
-  puid:
+  PUID:
     name: User ID (PUID)
     description: >-
-      UID that should own the config and library files. Match the owner of your
-      /share (and library) folders - usually 1000.
-  pgid:
+      UID that owns the config and library files. 0 (root) is simplest with a
+      CIFS-mounted library; use 1000 for a local /share library.
+  PGID:
     name: Group ID (PGID)
-    description: >-
-      GID that should own the config and library files - usually 1000.
+    description: GID counterpart to PUID.
   TZ:
     name: Timezone override
     description: >-
       e.g. Europe/Amsterdam. Leave blank to inherit the Home Assistant system
       timezone.
+  networkdisks:
+    name: SMB/CIFS share(s)
+    description: >-
+      e.g. //192.168.2.223/Media/Books - mounted at /mnt/Books. Comma-separate
+      for several. Leave blank to skip SMB mounting.
+  cifsusername:
+    name: SMB username
+    description: Username for the SMB/CIFS share(s).
+  cifspassword:
+    name: SMB password
+    description: >-
+      Password for the SMB/CIFS share(s). Any characters are fine - it is passed
+      through a credentials file, not the command line.
+  cifsdomain:
+    name: SMB domain / workgroup
+    description: Optional SMB workgroup or domain.

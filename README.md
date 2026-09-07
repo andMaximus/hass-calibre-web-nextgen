@@ -5,8 +5,9 @@ A Home Assistant add-on that runs
 actively-maintained community continuation of Calibre-Web-Automated.
 
 There is no official HA add-on for CWA / NextGen — this is a thin local wrapper
-(`Dockerfile` = `FROM ghcr.io/new-usemame/calibre-web-nextgen` + a small
-options→env shim). Supervisor builds it on install; no registry account needed.
+(`Dockerfile` = `FROM ghcr.io/new-usemame/calibre-web-nextgen` + a small shim
+that maps options to env vars and mounts optional SMB shares). Supervisor builds
+it on install; no registry account needed.
 
 ## What you get over plain calibre-web
 
@@ -15,6 +16,8 @@ options→env shim). Supervisor builds it on install; no registry account needed
 - **Hardcover sync** — status + progress + dates + annotations, one toggle,
   fed by both Kobo Sync and kosync
 - bundled Calibre binaries (auto-ingest, conversion, metadata enforcement)
+- optional **SMB/CIFS library mounting** (`networkdisks` etc. — carries over from
+  the alexbelgium calibre-web add-on)
 
 ## Add to Home Assistant
 

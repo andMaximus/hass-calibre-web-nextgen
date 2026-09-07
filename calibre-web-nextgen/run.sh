@@ -1,24 +1,79 @@
 #!/usr/bin/env bash
-# Entrypoint shim: map Home Assistant add-on options -> env vars for the
-# upstream LinuxServer-style image, then hand off to its s6-overlay init.
+# Entrypoint shim:
+#   1. map Home Assistant add-on options -> env vars for the upstream image
+#   2. mount any configured SMB/CIFS shares under /mnt/<name>
+#   3. hand off to the upstream s6-overlay init (/init) as PID 1
 set -eu
 
-# python3 is always present (calibre-web is a python app) - no extra deps.
+OPT=/data/options.json
+
+# --- options -> env --------------------------------------------------------
 eval "$(python3 - <<'PY'
-import json
+import json, shlex
 try:
     o = json.load(open("/data/options.json"))
 except Exception:
     o = {}
-print("export PUID=%d" % int(o.get("puid") or 1000))
-print("export PGID=%d" % int(o.get("pgid") or 1000))
+def sh(name, val):
+    print("%s=%s" % (name, shlex.quote(str(val))))
+sh("PUID", int(o.get("PUID", 0) or 0))
+sh("PGID", int(o.get("PGID", 0) or 0))
 tz = str(o.get("TZ") or "").strip()
 if tz and all(c.isalnum() or c in "/_+-" for c in tz):
-    print("export TZ=%s" % tz)
+    sh("TZ", tz)
+sh("_NETWORKDISKS", o.get("networkdisks") or "")
+sh("_CIFS_USER", o.get("cifsusername") or "")
+sh("_CIFS_PASS", o.get("cifspassword") or "")
+sh("_CIFS_DOMAIN", o.get("cifsdomain") or "")
 PY
 )"
+export PUID PGID
+[ -n "${TZ:-}" ] && export TZ || true
 
-echo "[calibre-web-nextgen] PUID=${PUID} PGID=${PGID} TZ=${TZ:-<system>}"
-echo "[calibre-web-nextgen] starting upstream init (/init)"
+echo "[cwng] PUID=${PUID} PGID=${PGID} TZ=${TZ:-<system>}"
 
+# --- SMB/CIFS mounts -----------------------------------------------------------
+mount_cifs() {
+    local spec="$1" mp="$2" cred="$3" base opts
+    base="credentials=${cred},uid=${PUID},gid=${PGID},file_mode=0664,dir_mode=0775,iocharset=utf8"
+    for extra in "vers=3.1.1" "vers=3.0" "vers=2.1" "vers=1.0" \
+                 "vers=3.0,noserverino" "vers=2.1,noserverino,nounix"; do
+        opts="${base},${extra}"
+        if mount -t cifs -o "$opts" "$spec" "$mp" 2>/tmp/cifs.err; then
+            echo "[cwng] mounted $spec -> $mp  ($extra)"
+            return 0
+        fi
+    done
+    echo "[cwng] ERROR: could not mount $spec -> $mp"
+    sed 's/^/[cwng]   /' /tmp/cifs.err 2>/dev/null || true
+    return 1
+}
+
+if [ -n "${_NETWORKDISKS}" ]; then
+    CRED="$(mktemp /tmp/.cifscred.XXXXXX)"
+    chmod 600 "$CRED"
+    {
+        printf 'username=%s\n' "${_CIFS_USER}"
+        printf 'password=%s\n' "${_CIFS_PASS}"
+        [ -n "${_CIFS_DOMAIN}" ] && printf 'domain=%s\n' "${_CIFS_DOMAIN}"
+    } > "$CRED"
+
+    OLDIFS="$IFS"; IFS=','
+    for disk in ${_NETWORKDISKS}; do
+        IFS="$OLDIFS"
+        disk="$(echo "$disk" | sed 's#\\#/#g; s#^[[:space:]]*##; s#[[:space:]]*$##')"
+        [ -z "$disk" ] && continue
+        case "$disk" in //*) : ;; *) disk="//${disk#/}" ;; esac
+        name="$(basename "$disk")"
+        mp="/mnt/${name}"
+        mkdir -p "$mp"
+        mount_cifs "$disk" "$mp" "$CRED" || true
+        IFS=','
+    done
+    IFS="$OLDIFS"
+    rm -f "$CRED"
+    echo "[cwng] SMB share(s) available under /mnt/ - point the Calibre library location there"
+fi
+
+echo "[cwng] starting upstream init (/init)"
 exec /init

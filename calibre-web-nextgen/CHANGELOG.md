@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.0
+
+- Optional SMB/CIFS library mounting: `networkdisks`, `cifsusername`,
+  `cifspassword`, `cifsdomain` options. Shares mount at `/mnt/<name>` with an
+  SMB-dialect + `noserverino` retry ladder. Carries over from the alexbelgium
+  calibre-web add-on's options.
+- Adds `cifs-utils` to the image; `privileged: [SYS_ADMIN, DAC_READ_SEARCH]`,
+  `apparmor: false` (needed for `mount`).
+- Options renamed `puid`/`pgid` -> `PUID`/`PGID`; defaults now `0` (root), to
+  match a CIFS-backed library and the alexbelgium add-on.
+
 ## 0.1.0
 
 - Initial release.

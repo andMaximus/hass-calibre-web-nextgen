@@ -28,24 +28,44 @@ Why this instead of plain calibre-web:
 
 | Option | Default | Notes |
 |---|---|---|
-| `puid` | `1000` | Must own your `/share` + library folders |
-| `pgid` | `1000` | |
+| `PUID` | `0` | UID that owns config + library. `0` (root) is simplest with CIFS; `1000` for a local `/share` library |
+| `PGID` | `0` | GID counterpart |
 | `TZ` | *(blank)* | Blank = inherit HA system timezone |
+| `networkdisks` | *(blank)* | SMB/CIFS share(s) to mount, e.g. `//192.168.2.223/Media/Books`. Comma-separate for several. Leave blank to skip |
+| `cifsusername` | *(blank)* | SMB username |
+| `cifspassword` | *(blank)* | SMB password (any characters OK - passed via a creds file, not the command line) |
+| `cifsdomain` | *(blank)* | SMB workgroup/domain (optional) |
 
 ## Storage layout
 
 | Container path | Mapped to | Use |
 |---|---|---|
 | `/config` | add-on config dir | `app.db`, users, settings, logs, KOReader sync state |
-| `/share` | HA `share` | put your Calibre library here, e.g. `/share/books/calibre` |
+| `/share` | HA `share` | local Calibre library, e.g. `/share/books/calibre` |
 | `/media` | HA `media` | alternative library / ingest location |
+| `/mnt/<share>` | mounted SMB share | each `networkdisks` entry mounts at `/mnt/<last-path-segment>` |
 
 On first run set **Admin -> Basic Configuration -> Location of Calibre database**
-to your library path (e.g. `/share/books/calibre`). If you have no library yet,
-NextGen can create an empty one there.
+to wherever `metadata.db` lives - e.g. `/mnt/Books` for the CIFS example above,
+or `/share/books/calibre` for a local library. If you have none, NextGen creates
+an empty one there.
 
 Book auto-ingest watches `/cwa-book-ingest` inside the container. To feed it from
-a share, set the ingest path in the UI to a folder under `/share` or `/media`.
+a share, set the ingest path in the UI to a folder under `/share`, `/media` or
+`/mnt/<share>`.
+
+### SMB/CIFS mount details
+
+The mount happens at container start (before the app), tries SMB dialects
+`3.1.1 -> 3.0 -> 2.1 -> 1.0` and retries once with `noserverino`. Mounts appear
+in the log as `[cwng] mounted ... -> /mnt/...`; a failure logs `[cwng] ERROR` and
+the raw `mount.cifs` message, and the add-on still starts so you can read the log.
+Mounting needs the `SYS_ADMIN` capability and the add-on's AppArmor profile is
+disabled for that reason (it holds `SYS_ADMIN` regardless).
+
+Migrating from the alexbelgium calibre-web add-on: the `networkdisks` /
+`cifsusername` / `cifspassword` / `PUID` / `PGID` options carry over as-is (it
+also mounts at `/mnt/<name>`).
 
 ## Migrating from an existing calibre-web / CWA add-on
 
