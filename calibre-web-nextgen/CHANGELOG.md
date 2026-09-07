@@ -1,10 +1,10 @@
 # Changelog
 
-## 0.4.1
-
 ## 0.4.2
 
 - Icon: rounded corners (transparent) + sharpened.
+
+## 0.4.1
 
 - Add `icon.png` (NextGen app icon) and `logo.png` (NextGen banner) for the
   add-on store.
