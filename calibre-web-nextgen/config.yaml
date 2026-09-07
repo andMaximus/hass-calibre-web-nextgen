@@ -1,0 +1,45 @@
+---
+name: Calibre-Web-NextGen
+version: "0.1.0"
+slug: calibre_web_nextgen
+description: >-
+  Actively-maintained fork of Calibre-Web-Automated with built-in KOReader
+  kosync, Kobo Sync and Hardcover reading-progress sync.
+url: https://github.com/andMaximus/hass-calibre-web-nextgen/tree/main/calibre-web-nextgen
+# Upstream image is amd64 + arm64 only (no armv7). Built locally by Supervisor
+# from ./Dockerfile (a thin wrapper over the upstream image) - no registry needed.
+arch:
+  - amd64
+  - aarch64
+# The upstream image ships its own s6-overlay init at /init - let it run.
+init: false
+# Serve the UI through the HA sidebar.
+ingress: true
+ingress_port: 8083
+ingress_stream: true
+panel_icon: mdi:bookshelf
+panel_title: Calibre-Web
+# Expose 8083 on the host so devices outside HA (Kobo / KOReader over Tailscale)
+# can reach the Kobo Sync + kosync endpoints. Set to null to disable.
+ports:
+  8083/tcp: 8083
+ports_description:
+  8083/tcp: >-
+    Web UI + Kobo Sync + KOReader kosync endpoints. Keep mapped if devices
+    connect from outside Home Assistant (e.g. over Tailscale).
+map:
+  - type: share
+    read_only: false
+  - type: media
+    read_only: false
+  - type: addon_config
+    read_only: false
+    path: /config
+options:
+  puid: 1000
+  pgid: 1000
+  TZ: ""
+schema:
+  puid: int
+  pgid: int
+  TZ: "str?"

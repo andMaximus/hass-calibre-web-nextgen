@@ -1,0 +1,16 @@
+---
+configuration:
+  puid:
+    name: User ID (PUID)
+    description: >-
+      UID that should own the config and library files. Match the owner of your
+      /share (and library) folders - usually 1000.
+  pgid:
+    name: Group ID (PGID)
+    description: >-
+      GID that should own the config and library files - usually 1000.
+  TZ:
+    name: Timezone override
+    description: >-
+      e.g. Europe/Amsterdam. Leave blank to inherit the Home Assistant system
+      timezone.
