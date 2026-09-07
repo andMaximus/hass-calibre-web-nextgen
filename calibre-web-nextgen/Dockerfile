@@ -1,4 +1,7 @@
-ARG BUILD_FROM
+# Thin wrapper over the upstream multi-arch image (amd64 + arm64). Supervisor
+# passes BUILD_ARCH / BUILD_VERSION automatically; the BUILD_FROM default below
+# is used unless overridden. Docker resolves the right platform from the manifest.
+ARG BUILD_FROM="ghcr.io/new-usemame/calibre-web-nextgen:latest"
 FROM ${BUILD_FROM}
 
 # cifs-utils: mount the library from an SMB/CIFS share (optional feature).
@@ -18,6 +21,12 @@ RUN \
 COPY nginx-ingress.conf /etc/nginx-ingress.conf
 COPY run.sh /ha-run.sh
 RUN chmod a+x /ha-run.sh
+
+LABEL \
+    org.opencontainers.image.title="Calibre-Web-NextGen (Home Assistant add-on)" \
+    org.opencontainers.image.description="HA add-on wrapper around ghcr.io/new-usemame/calibre-web-nextgen" \
+    org.opencontainers.image.source="https://github.com/andMaximus/hass-calibre-web-nextgen" \
+    org.opencontainers.image.licenses="GPL-3.0-only"
 
 # Translate add-on options to env vars, mount any configured SMB shares, start
 # the Ingress nginx shim, then exec the upstream s6-overlay init (/init) as PID 1.

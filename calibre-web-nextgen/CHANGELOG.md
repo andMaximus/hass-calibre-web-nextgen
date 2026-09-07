@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0
+
+- Drop `build.yaml` (Supervisor deprecated it). `BUILD_FROM` is now an `ARG`
+  default in the Dockerfile; labels moved to `LABEL` instructions.
+- `map` type `addon_config` -> `app_config` (Supervisor renamed it). Same
+  `/config` mount, same data - no migration needed.
+
 ## 0.4.2
 
 - Icon: rounded corners (transparent) + sharpened.

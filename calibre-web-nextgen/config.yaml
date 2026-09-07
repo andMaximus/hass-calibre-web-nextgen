@@ -1,6 +1,6 @@
 ---
 name: Calibre-Web-NextGen
-version: "0.4.2"
+version: "0.5.0"
 slug: calibre_web_nextgen
 description: >-
   eBook library + reader. Actively-maintained fork of Calibre-Web-Automated:
@@ -36,7 +36,7 @@ map:
     read_only: false
   - type: media
     read_only: false
-  - type: addon_config
+  - type: app_config
     read_only: false
     path: /config
 # mount(2) for CIFS needs SYS_ADMIN; DAC_READ_SEARCH helps traverse the share.
