@@ -1,12 +1,14 @@
 ---
 name: Calibre-Web-NextGen
-version: "0.4.0"
+version: "0.4.1"
 slug: calibre_web_nextgen
 description: >-
-  Actively-maintained fork of Calibre-Web-Automated with built-in KOReader
-  kosync, Kobo Sync and Hardcover reading-progress sync. Optional SMB/CIFS
-  library mounting.
+  eBook library + reader. Actively-maintained fork of Calibre-Web-Automated:
+  bundled Calibre, Kobo Sync, a built-in KOReader kosync server, and one-switch
+  Hardcover reading-progress sync - so a Kobo and a KOReader device stay in sync
+  through one hub. Optional SMB/CIFS library mounting.
 url: https://github.com/andMaximus/hass-calibre-web-nextgen/tree/main/calibre-web-nextgen
+stage: stable
 # Upstream image is amd64 + arm64 only (no armv7). Built locally by Supervisor
 # from ./Dockerfile (a thin wrapper over the upstream image) - no registry needed.
 arch:

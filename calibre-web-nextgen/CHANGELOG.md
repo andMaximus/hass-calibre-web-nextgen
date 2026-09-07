@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.1
+
+- Add `icon.png` (NextGen app icon) and `logo.png` (NextGen banner) for the
+  add-on store.
+- Fuller store description; `stage: stable`.
+
 ## 0.4.0
 
 - Fix Ingress 404: add an in-container nginx shim (`nginx-light`) on port 8099
