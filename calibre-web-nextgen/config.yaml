@@ -1,6 +1,6 @@
 ---
 name: Calibre-Web-NextGen
-version: "0.7.0"
+version: "0.7.1"
 slug: calibre_web_nextgen
 description: >-
   eBook library + reader. Actively-maintained fork of Calibre-Web-Automated:

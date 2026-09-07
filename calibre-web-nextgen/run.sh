@@ -37,7 +37,11 @@ echo "[cwng] PUID=${PUID} PGID=${PGID} TZ=${TZ:-<system>}"
 # --- SMB/CIFS mounts -----------------------------------------------------------
 mount_cifs() {
     local spec="$1" mp="$2" cred="$3" base opts
-    base="credentials=${cred},uid=${PUID},gid=${PGID},file_mode=0664,dir_mode=0775,iocharset=utf8"
+    # nobrl: CIFS byte-range locks are unreliable on many NAS SMB servers and
+    # make SQLite (metadata.db) throw spurious "database is locked". Disabling
+    # them is the standard SQLite-on-CIFS workaround - safe as long as only this
+    # add-on writes the library.
+    base="credentials=${cred},uid=${PUID},gid=${PGID},file_mode=0664,dir_mode=0775,iocharset=utf8,nobrl"
     for extra in "vers=3.1.1" "vers=3.0" "vers=2.1" "vers=1.0" \
                  "vers=3.0,noserverino" "vers=2.1,noserverino,nounix"; do
         opts="${base},${extra}"

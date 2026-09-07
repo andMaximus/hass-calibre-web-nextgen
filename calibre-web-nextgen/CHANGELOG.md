@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.1
+
+- CIFS mounts now use `nobrl` - the NAS's SMB byte-range locking made SQLite
+  (`metadata.db`) throw persistent "database is locked" (kepub_package_repair,
+  KOReader checksum tables). Standard SQLite-on-CIFS fix; safe while the add-on
+  is the only writer of the library.
+
 ## 0.7.0
 
 - Add an optional `ingest` option: bind-mounts a drop folder to
