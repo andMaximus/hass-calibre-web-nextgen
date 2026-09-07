@@ -36,6 +36,7 @@ direct `http://<ha-ip-or-tailnet-ip>:8083` URL, not the Ingress one.
 | `PGID` | `0` | GID counterpart |
 | `TZ` | *(blank)* | Blank = inherit HA system timezone |
 | `library` | *(blank)* | Path to the folder holding your `metadata.db`, e.g. `/mnt/Books` or `/share/books/calibre`. Bound to `/calibre-library` where CWA looks. Blank = CWA auto-detects or creates one |
+| `ingest` | *(blank)* | Optional auto-import drop folder. Files placed here are converted and added to the library, then deleted. Bound to `/cwa-book-ingest`. Blank = feature unused |
 | `networkdisks` | *(blank)* | SMB/CIFS share(s) to mount, e.g. `//192.168.2.223/Media/Books`. Comma-separate for several. Leave blank to skip |
 | `cifsusername` | *(blank)* | SMB username |
 | `cifspassword` | *(blank)* | SMB password (any characters OK - passed via a creds file, not the command line) |
@@ -46,9 +47,11 @@ direct `http://<ha-ip-or-tailnet-ip>:8083` URL, not the Ingress one.
 | Container path | Mapped to | Use |
 |---|---|---|
 | `/config` | add-on config dir | `app.db`, users, settings, logs, KOReader sync state |
-| `/share` | HA `share` | local Calibre library, e.g. `/share/books/calibre` |
+| `/share` | HA `share` | local Calibre library / ingest folder |
 | `/media` | HA `media` | alternative library / ingest location |
 | `/mnt/<share>` | mounted SMB share | each `networkdisks` entry mounts at `/mnt/<last-path-segment>` |
+| `/calibre-library` | `library` option | where CWA reads the library |
+| `/cwa-book-ingest` | `ingest` option | auto-import drop folder |
 
 **Setting the library:** CWA/NextGen deliberately disables the "Location of
 Calibre database" field in the UI - it only looks in `/calibre-library`. Use the
@@ -59,10 +62,11 @@ that to `/calibre-library` and CWA auto-detects the existing library on start
 one. If CWA logs "not a Calibre database", the path is pointing one level too
 high or low - fix `library` and restart.
 
-Book auto-ingest watches `/cwa-book-ingest` inside the container. To feed it from
-a share, run `cwa-change-dirs` in the add-on's container terminal, or drop files
-into `/share`/`/media` and move them - the ingest folder can't be remapped from
-the add-on options yet.
+**Auto-import (optional):** set the `ingest` option to a folder (under `/share`,
+`/media` or `/mnt/<share>`). Anything dropped there is converted (to kepub etc.)
+and added to the library, then removed. This is also the safe way to add books
+once NextGen owns the library - it keeps NextGen the only writer of
+`metadata.db`, unlike running `calibredb add` against the share directly.
 
 ### SMB/CIFS mount details
 
@@ -75,22 +79,12 @@ custom profile (`apparmor.txt`) that permits `mount` but still confines the rest
 - so the add-on keeps a reasonable security rating rather than the lower one that
 disabling AppArmor would give.
 
-Migrating from the alexbelgium calibre-web add-on: the `networkdisks` /
-`cifsusername` / `cifspassword` / `PUID` / `PGID` options carry over as-is (it
-also mounts at `/mnt/<name>`).
-
-## Migrating from an existing calibre-web / CWA add-on
-
-`app.db` is compatible along the whole calibre-web -> CWA -> NextGen line.
-
-1. **Back up** your current add-on's config dir (the folder holding `app.db`).
-2. Stop the old add-on.
-3. Copy its `app.db` (and `.calibre-web.log`, `gdrive*` if used) into this
-   add-on's `/config` dir (`/addon_configs/<slug>_calibre_web_nextgen/`).
-4. Start this add-on. It runs its migrations on first boot. Verify users, shelves
-   and the library show up.
-5. Only run one of them at a time - both writing the same `app.db` or the same
-   Calibre library will corrupt state / hit "database is locked".
+The `networkdisks` / `cifsusername` / `cifspassword` / `PUID` / `PGID` options
+match the alexbelgium calibre-web add-on's, and it also mounts at `/mnt/<name>` -
+so switching over is mostly copying those values across. Point `library` at your
+existing library folder and NextGen picks it up. Start fresh on `app.db` (users,
+shelves): re-creating a user takes a minute and avoids SQLite corruption from a
+half-copied database.
 
 ## Kobo
 
@@ -121,4 +115,6 @@ Hardcover-ID backfill and the Kobo/KOReader progress -> Hardcover sync.
 
 - Upstream image is **amd64 / aarch64 only** - not armv7.
 - The add-on rebuilds against upstream `:latest` whenever you reinstall or bump
-  its version. Pin a tag in `build.yaml` for reproducibility.
+  its version. Pin a tag in the Dockerfile `ARG BUILD_FROM` for reproducibility.
+- SQLite over SMB: `metadata.db` lives on your share. Keep NextGen the only thing
+  writing it (use the `ingest` folder, not `calibredb` from another machine).

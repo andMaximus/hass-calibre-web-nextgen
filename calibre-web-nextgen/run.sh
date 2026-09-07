@@ -22,6 +22,7 @@ tz = str(o.get("TZ") or "").strip()
 if tz and all(c.isalnum() or c in "/_+-" for c in tz):
     sh("TZ", tz)
 sh("_LIBRARY", str(o.get("library") or "").strip())
+sh("_INGEST", str(o.get("ingest") or "").strip())
 sh("_NETWORKDISKS", o.get("networkdisks") or "")
 sh("_CIFS_USER", o.get("cifsusername") or "")
 sh("_CIFS_PASS", o.get("cifspassword") or "")
@@ -94,6 +95,21 @@ if [ -n "${_LIBRARY}" ]; then
         fi
     else
         echo "[cwng] WARN: library path '${_LIBRARY}' does not exist - check the SMB mount / path"
+    fi
+fi
+
+# --- ingest drop folder --------------------------------------------------------
+if [ -n "${_INGEST}" ]; then
+    if [ -d "${_INGEST}" ]; then
+        mkdir -p /cwa-book-ingest
+        if mount --bind "${_INGEST}" /cwa-book-ingest 2>/tmp/bind.err; then
+            echo "[cwng] ingest: bound ${_INGEST} -> /cwa-book-ingest"
+        else
+            echo "[cwng] WARN: bind mount of ${_INGEST} failed:"
+            sed 's/^/[cwng]   /' /tmp/bind.err 2>/dev/null || true
+        fi
+    else
+        echo "[cwng] WARN: ingest path '${_INGEST}' does not exist"
     fi
 fi
 

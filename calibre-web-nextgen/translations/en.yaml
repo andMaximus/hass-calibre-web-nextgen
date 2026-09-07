@@ -13,6 +13,11 @@ configuration:
     description: >-
       e.g. Europe/Amsterdam. Leave blank to inherit the Home Assistant system
       timezone.
+  ingest:
+    name: Auto-import drop folder
+    description: >-
+      Optional. A folder (under /share, /media or /mnt/<share>) whose contents
+      are converted and added to the library, then removed. Leave blank if unused.
   networkdisks:
     name: SMB/CIFS share(s)
     description: >-

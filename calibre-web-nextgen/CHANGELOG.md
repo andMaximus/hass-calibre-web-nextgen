@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.0
+
+- Add an optional `ingest` option: bind-mounts a drop folder to
+  `/cwa-book-ingest` for CWA auto-import.
+- DOCS: drop the app.db-migration section (start fresh instead - a half-copied
+  SQLite db corrupts); note SQLite-over-SMB single-writer caveat.
+
 ## 0.6.0
 
 - Add a `library` option: bind-mounts the folder holding your `metadata.db` to
