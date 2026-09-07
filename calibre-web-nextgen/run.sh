@@ -87,10 +87,12 @@ fi
 # metadata.db lives on the share. Format: host:/export  (comma-separate several).
 mount_nfs() {
     local spec="$1" mp="$2" opts
-    for opts in "vers=4.2" "vers=4.1" "vers=4.0" "vers=3,nolock"; do
+    # vers=4 negotiates the highest NFSv4 minor both sides support (locking works).
+    # vers=3,nolock is a last resort - SQLite locking will NOT work on it.
+    for opts in "vers=4" "vers=3,nolock"; do
         if mount -t nfs -o "rw,hard,${opts}" "$spec" "$mp" 2>/tmp/nfs.err; then
             echo "[cwng] mounted $spec -> $mp  (nfs ${opts})"
-            case "$opts" in vers=3*) echo "[cwng]   NOTE: NFSv3 fell back with nolock - SQLite locking will NOT work; prefer NFSv4 on the NAS" ;; esac
+            case "$opts" in vers=3*) echo "[cwng]   NOTE: fell back to NFSv3+nolock - SQLite locking will NOT work here; export NFSv4 on the NAS" ;; esac
             return 0
         fi
     done

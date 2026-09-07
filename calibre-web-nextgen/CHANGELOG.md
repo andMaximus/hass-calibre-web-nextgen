@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.1
+
+- NFS mount: use `vers=4` (auto-negotiate the v4 minor) instead of a hardcoded
+  4.2->4.1->4.0 ladder. Tested end-to-end against a QNAP NFSv4.1 export:
+  mount + SQLite write-lock + integrity_check all pass.
+
 ## 0.8.0
 
 - Add `nfsdisks` option + `nfs-common` in the image. NFSv4 gives SQLite
