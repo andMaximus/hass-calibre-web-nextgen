@@ -5,7 +5,7 @@ NextGen `v4.1.43`). `.github/workflows/upstream-sync.yml` bumps it automatically
 on every upstream release, so Home Assistant shows an update. History below the
 switch is the wrapper's own `0.x` line.
 
-## 4.1.43-1
+## 4.1.43.1
 
 - Ingest watcher: set `NETWORK_SHARE_MODE=true` automatically when an NFS or
   SMB share is configured, so NextGen polls the ingest folder instead of using
