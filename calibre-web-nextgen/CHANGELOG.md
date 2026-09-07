@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.1
+
+- Fix: `apparmor` config key must be a boolean, not a profile name (Supervisor
+  rejected 0.3.0 with "expected boolean"). `apparmor.txt` is auto-loaded by its
+  filename; the key just toggles it. Now `apparmor: true`.
+
 ## 0.3.0
 
 - Ship a custom AppArmor profile (`apparmor.txt`) instead of `apparmor: false`.
