@@ -2,7 +2,7 @@
 # below is bumped automatically by .github/workflows/upstream-sync.yml whenever
 # Calibre-Web-NextGen cuts a release; the add-on `version:` tracks it 1:1.
 # Docker resolves the right platform from the multi-arch manifest.
-ARG BUILD_FROM="ghcr.io/new-usemame/calibre-web-nextgen:v4.1.44"
+ARG BUILD_FROM="ghcr.io/new-usemame/calibre-web-nextgen:v4.1.45"
 FROM ${BUILD_FROM}
 
 # cifs-utils / nfs-common: mount the library from an SMB or NFS share (optional).
