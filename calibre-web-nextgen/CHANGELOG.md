@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.1.69
+
+- Track upstream Calibre-Web-NextGen [`v4.1.69`](https://github.com/new-usemame/Calibre-Web-NextGen/releases/tag/v4.1.69).
+
+
 ## 4.1.68
 
 - Track upstream Calibre-Web-NextGen [`v4.1.68`](https://github.com/new-usemame/Calibre-Web-NextGen/releases/tag/v4.1.68).
