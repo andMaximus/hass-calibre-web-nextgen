@@ -16,9 +16,18 @@ concurrency:
   group: upstream-sync
   cancel-in-progress: false
 
+env:
+  IMAGE_PREFIX: ghcr.io/andmaximus
+
 jobs:
-  sync:
+  # 1. Work out whether upstream moved; if so, apply the bump to the files (NOT
+  #    committed yet) and hand the resulting add-on folder to the later jobs.
+  prepare:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
+      bump: ${{ steps.flags.outputs.bump }}
+      tag: ${{ steps.up.outputs.tag }}
     steps:
       - uses: actions/checkout@v5
 
@@ -31,7 +40,7 @@ jobs:
           if [ -z "$tag" ] || [ "$tag" = "null" ]; then
             echo "could not resolve upstream release"; exit 1
           fi
-          echo "tag=$tag"       >> "$GITHUB_OUTPUT"
+          echo "tag=$tag"         >> "$GITHUB_OUTPUT"
           echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
 
       - name: Read current pinned upstream image
@@ -42,8 +51,17 @@ jobs:
           cur=$(grep -oE 'calibre-web-nextgen:v[0-9][0-9.]*' calibre-web-nextgen/Dockerfile | head -1 | sed 's/.*:v//')
           echo "version=$cur" >> "$GITHUB_OUTPUT"
 
-      - name: Bump to upstream release
-        if: steps.up.outputs.version != steps.cur.outputs.version
+      - name: Flag bump
+        id: flags
+        run: |
+          if [ "${{ steps.up.outputs.version }}" != "${{ steps.cur.outputs.version }}" ]; then
+            echo "bump=true"  >> "$GITHUB_OUTPUT"
+          else
+            echo "bump=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Apply bump to files (not committed)
+        if: steps.flags.outputs.bump == 'true'
         env:
           NEW: ${{ steps.up.outputs.version }}
           TAG: ${{ steps.up.outputs.tag }}
@@ -65,59 +83,87 @@ jobs:
           } > CHANGELOG.md.new
           mv CHANGELOG.md.new CHANGELOG.md
 
-          cd ..
-
-      # Prebuilt images: Supervisor pulls ghcr.io/andmaximus/<arch>-hass-calibre-web-nextgen:<version>
-      # (config.yaml `image:`) instead of building on the user's Pi. The image MUST
-      # exist before the version bump is pushed, or HA would offer an update that
-      # cannot be installed - so build first, commit after.
       - name: Read add-on version
         id: ver
         run: |
           v=$(awk -F'"' '/^version:/{print $2; exit}' calibre-web-nextgen/config.yaml)
           echo "version=$v" >> "$GITHUB_OUTPUT"
 
-      - name: Check whether images already exist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: addon
+          path: calibre-web-nextgen
+          retention-days: 1
+
+  # 2. One job per architecture, each on a native runner (no QEMU). A failure in
+  #    one arch does not cancel the other, and a failed arch can be re-run alone.
+  build:
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+            platform: linux/amd64
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+            platform: linux/arm64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: addon
+          path: calibre-web-nextgen
+
+      - name: Log in to GHCR
+        run: echo "${{ github.token }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Check whether this image already exists
         id: exists
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
-          echo "${{ github.token }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
-          img=ghcr.io/andmaximus; v="${{ steps.ver.outputs.version }}"
-          if docker buildx imagetools inspect "$img/aarch64-hass-calibre-web-nextgen:$v" >/dev/null 2>&1 \
-             && docker buildx imagetools inspect "$img/amd64-hass-calibre-web-nextgen:$v" >/dev/null 2>&1; then
-            echo "built=true" >> "$GITHUB_OUTPUT"
+          img="${IMAGE_PREFIX}/${{ matrix.arch }}-hass-calibre-web-nextgen:${{ needs.prepare.outputs.version }}"
+          if docker buildx imagetools inspect "$img" >/dev/null 2>&1; then
+            echo "built=true"  >> "$GITHUB_OUTPUT"
           else
             echo "built=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: docker/setup-qemu-action@v3
-        if: steps.exists.outputs.built == 'false'
-      - uses: docker/setup-buildx-action@v3
-        if: steps.exists.outputs.built == 'false'
-
-      - name: Build and push per-arch images
+      - name: Build and push
         if: steps.exists.outputs.built == 'false'
         run: |
           set -euo pipefail
-          v="${{ steps.ver.outputs.version }}"
-          for pair in amd64:linux/amd64 aarch64:linux/arm64; do
-            arch="${pair%%:*}"; platform="${pair##*:}"
-            docker buildx build \
-              --platform "$platform" \
-              --push \
-              -t "ghcr.io/andmaximus/${arch}-hass-calibre-web-nextgen:${v}" \
-              -t "ghcr.io/andmaximus/${arch}-hass-calibre-web-nextgen:latest" \
-              calibre-web-nextgen
-          done
+          base="${IMAGE_PREFIX}/${{ matrix.arch }}-hass-calibre-web-nextgen"
+          v="${{ needs.prepare.outputs.version }}"
+          docker build \
+            --platform "${{ matrix.platform }}" \
+            -t "$base:$v" \
+            -t "$base:latest" \
+            calibre-web-nextgen
+          docker push "$base:$v"
+          docker push "$base:latest"
+
+  # 3. Only after BOTH images exist, commit the bump so HA never offers an
+  #    update it cannot install.
+  commit:
+    needs: [prepare, build]
+    if: needs.prepare.outputs.bump == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: addon
+          path: calibre-web-nextgen
 
       - name: Commit and push version bump
-        if: steps.up.outputs.version != steps.cur.outputs.version
         env:
-          TAG: ${{ steps.up.outputs.tag }}
+          TAG: ${{ needs.prepare.outputs.tag }}
         run: |
           git config user.name  "andMaximus"
           git config user.email "72256503+andMaximus@users.noreply.github.com"
           git add -A
           git commit -m "chore: track upstream NextGen ${TAG}"
+          git pull --rebase
           git push
